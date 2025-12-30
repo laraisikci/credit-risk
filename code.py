@@ -31,3 +31,22 @@ print(loan_intent_status)
 home_ownership_status = pd.crosstab(df['home_ownership'], df['loan_status'], margins=True)
 print(home_ownership_status)
 
+# Creating a box plot to visualize the distribution of income based on loan status
+df.boxplot(column='annual_inc', by='loan_status', grid=False, color='green')
+plt.title('Income Distribution by Loan Status')
+plt.suptitle('')
+plt.xlabel('Loan Status')
+plt.ylabel('Annual Income')
+plt.show()
+
+# Starting with data cleaning
+# Since an employment length of less than 0 and more than 60 is not realistic, 
+# we will remove those rows
+indices = df[(df['emp_length'] < 0) | (df['emp_length'] > 60)].index
+df_new = df.drop(indices)
+# Since age less than 18 and more than 100 are not realistic, we will remove 
+# those rows
+indices_age = df_new[(df_new['age'] < 18) | (df_new['age'] > 100)].index
+df_cleaned_age = df_new.drop(indices_age)
+
+# Replacing missing data 

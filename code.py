@@ -17,7 +17,7 @@ plt.title('Distribution of Loan Amounts')
 plt.show()
 
 # Looking at the relationship between income and loan amount with scatter plot
-plt.scatter(df['annual_inc'], df['loan_amnt'], c="blue", alpha=0.5)
+plt.scatter(df['person_income'], df['loan_amnt'], c="blue", alpha=0.5)
 plt.xlabel('Annual Income')
 plt.ylabel('Loan Amount')
 plt.title('Income vs Loan Amount')
@@ -28,11 +28,11 @@ loan_intent_status = pd.crosstab(df['loan_intent'], df['loan_status'], margins=T
 print(loan_intent_status)
 
 # Creating a cross table of the home ownership and loan status
-home_ownership_status = pd.crosstab(df['home_ownership'], df['loan_status'], margins=True)
+home_ownership_status = pd.crosstab(df['person_home_ownership'], df['loan_status'], margins=True)
 print(home_ownership_status)
 
 # Creating a box plot to visualize the distribution of income based on loan status
-df.boxplot(column='annual_inc', by='loan_status', grid=False, color='green')
+df.boxplot(column='person_income', by='loan_status', grid=False, color='green')
 plt.title('Income Distribution by Loan Status')
 plt.suptitle('')
 plt.xlabel('Loan Status')
@@ -42,11 +42,20 @@ plt.show()
 # Starting with data cleaning
 # Since an employment length of less than 0 and more than 60 is not realistic, 
 # we will remove those rows
-indices = df[(df['emp_length'] < 0) | (df['emp_length'] > 60)].index
+indices = df[(df['person_emp_length'] < 0) | (df['person_emp_length'] > 60)].index
 df_new = df.drop(indices)
 # Since age less than 18 and more than 100 are not realistic, we will remove 
 # those rows
-indices_age = df_new[(df_new['age'] < 18) | (df_new['age'] > 100)].index
+indices_age = df_new[(df_new['person_age'] < 18) | (df_new['person_age'] > 100)].index
 df_cleaned_age = df_new.drop(indices_age)
 
 # Replacing missing data 
+print(df_cleaned_age.isnull().sum()) 
+df_cleaned_age['person_emp_length'] = df_cleaned_age['person_emp_length'].fillna(df_cleaned_age['person_emp_length'].median())
+df_cleaned_age['loan_int_rate'] = df_cleaned_age['loan_int_rate'].fillna(0)
+print(df_cleaned_age.isnull().sum()) 
+print(df_cleaned_age['person_home_ownership'].value_counts())
+
+# Replacing missing categorical data with other
+df_cleaned_age['person_home_ownership'] = df_cleaned_age['person_home_ownership'].fillna('OTHER')
+print(df_cleaned_age.isnull().sum())

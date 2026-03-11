@@ -1,4 +1,10 @@
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
 df = pd.read_csv("credit_risk_dataset.csv")
 
 # Display the data types of each column in the DataFrame
@@ -8,7 +14,6 @@ print(df.dtypes)
 print(df.head())
 
 # Looking at the distribution of loan amounts with histogram
-import matplotlib.pyplot as plt
 n, bins, patches = plt.hist(df['loan_amnt'], bins="auto", color='red', 
                             alpha=0.7, rwidth=0.85)
 plt.xlabel('Loan Amount')
@@ -52,10 +57,52 @@ df_cleaned_age = df_new.drop(indices_age)
 # Replacing missing data 
 print(df_cleaned_age.isnull().sum()) 
 df_cleaned_age['person_emp_length'] = df_cleaned_age['person_emp_length'].fillna(df_cleaned_age['person_emp_length'].median())
-df_cleaned_age['loan_int_rate'] = df_cleaned_age['loan_int_rate'].fillna(0)
+df_cleaned_age['loan_int_rate'] = df_cleaned_age['loan_int_rate'].fillna(df_cleaned['loan_int_rate'].median())
 print(df_cleaned_age.isnull().sum()) 
 print(df_cleaned_age['person_home_ownership'].value_counts())
 
 # Replacing missing categorical data with other
 df_cleaned_age['person_home_ownership'] = df_cleaned_age['person_home_ownership'].fillna('OTHER')
 print(df_cleaned_age.isnull().sum())
+
+# Encoding categorical variables 
+df_model = pd.get_dummies(df_cleaned, columns=[
+    'person_home_ownership',
+    'loan_intent',
+    'loan_grade',
+    'cb_person_default_on_file'
+], drop_first=True)
+
+# Feature selection
+feature_cols = [
+    'loan_int_rate', 'person_emp_length', 'person_income',
+    'loan_amnt', 'loan_percent_income', 'person_age', 'cb_person_cred_hist_length'
+] + [col for col in df_model.columns if col.startswith((
+    'person_home_ownership_',
+    'loan_intent_',
+    'loan_grade_',
+    'cb_person_default_on_file_'
+))]
+
+
+# Creating X and y for modeling
+X = df_model[feature_cols]
+y = df_model['loan_status']
+
+
+# Splitting the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y,   test_size=0.2, 
+                                                    random_state=123)
+
+#Feature scaling 
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)   
+X_test_scaled = scaler.transform(X_test)  
+
+#Logistic Regression
+clf_logistic = LogisticRegression(solver="lbfgs", max_iter=1000)
+clf_logistic.fit(X_train_scaled, y_train)
+
+preds = clf_logistic.predict(X_test_scaled)
+print("=== Logistic Regression ===")
+print(classification_report(y_test, preds))

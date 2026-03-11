@@ -57,7 +57,7 @@ df_cleaned_age = df_new.drop(indices_age)
 # Replacing missing data 
 print(df_cleaned_age.isnull().sum()) 
 df_cleaned_age['person_emp_length'] = df_cleaned_age['person_emp_length'].fillna(df_cleaned_age['person_emp_length'].median())
-df_cleaned_age['loan_int_rate'] = df_cleaned_age['loan_int_rate'].fillna(df_cleaned['loan_int_rate'].median())
+df_cleaned_age['loan_int_rate'] = df_cleaned_age['loan_int_rate'].fillna(df_cleaned_age['loan_int_rate'].median())
 print(df_cleaned_age.isnull().sum()) 
 print(df_cleaned_age['person_home_ownership'].value_counts())
 
@@ -66,7 +66,7 @@ df_cleaned_age['person_home_ownership'] = df_cleaned_age['person_home_ownership'
 print(df_cleaned_age.isnull().sum())
 
 # Encoding categorical variables 
-df_model = pd.get_dummies(df_cleaned, columns=[
+df_model = pd.get_dummies(df_cleaned_age, columns=[
     'person_home_ownership',
     'loan_intent',
     'loan_grade',
@@ -100,9 +100,81 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)  
 
 #Logistic Regression
-clf_logistic = LogisticRegression(solver="lbfgs", max_iter=1000)
+clf_logistic = LogisticRegression(solver="lbfgs", max_iter=1000, class_weight="balanced")
 clf_logistic.fit(X_train_scaled, y_train)
 
 preds = clf_logistic.predict(X_test_scaled)
-print("=== Logistic Regression ===")
+print(" Logistic Regression ")
 print(classification_report(y_test, preds))
+
+#Random Forest 
+from sklearn.ensemble import RandomForestClassifier
+
+clf_rf = RandomForestClassifier(n_estimators=100, random_state=123, n_jobs=-1, class_weight="balanced")
+clf_rf.fit(X_train, y_train)
+
+#XGBoost 
+from xgboost import XGBClassifier
+neg, pos = y_train.value_counts()[0], y_train.value_counts()[1]
+scale = neg / pos
+
+clf_xgb = XGBClassifier(n_estimators=100, random_state=123,
+                         use_label_encoder=False, eval_metric='logloss', scale_pos_weight = scale)
+clf_xgb.fit(X_train, y_train)
+
+#Evaluating the models with the models 
+models = {
+    "Logistic Regression": (clf_logistic, X_test_scaled),
+    "Random Forest":       (clf_rf,       X_test),
+    "XGBoost":             (clf_xgb,      X_test),
+}
+
+for name, (model, X_eval) in models.items():
+    preds = model.predict(X_eval)
+    print(f" {name} ")
+    print(classification_report(y_test, preds))
+
+#ROC/AUC Curves
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, ConfusionMatrixDisplay
+
+
+plt.figure(figsize=(8, 6))
+
+for name, (model, X_eval) in models.items():
+    proba = model.predict_proba(X_eval)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, proba)
+    auc = roc_auc_score(y_test, proba)
+    plt.plot(fpr, tpr, label=f"{name} (AUC = {auc:.3f})")
+
+plt.plot([0, 1], [0, 1], 'k--', label="Random baseline")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve Comparison")
+plt.legend()
+plt.tight_layout()
+plt.show() 
+
+#Confusion Matrix 
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, ConfusionMatrixDisplay
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+for ax, (name, (model, X_eval)) in zip(axes, models.items()):
+    preds = model.predict(X_eval)
+    ConfusionMatrixDisplay.from_predictions(y_test, preds, ax=ax, colorbar=False)
+    ax.set_title(name)
+
+plt.tight_layout()
+plt.show()
+
+#Feature Importance
+importances = pd.Series(clf_rf.feature_importances_, index=feature_cols)
+top15 = importances.sort_values(ascending=False).head(15)
+
+plt.figure(figsize=(8, 6))
+top15.sort_values().plot(kind='barh', color='steelblue')
+plt.title("Top 15 Feature Importances (Random Forest)")
+plt.xlabel("Importance")
+plt.tight_layout()
+plt.show()
+

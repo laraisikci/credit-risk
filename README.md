@@ -56,3 +56,24 @@ The dataset is imbalanced (~78% non-default, ~22% default). To prevent the model
 | **XGBoost** | **0.952** | **92%** | **0.82** | **0.79** | **0.81** |
 
 **XGBoost is the best performing model** with an AUC of 0.952 and the strongest balance between precision and recall on the default class. In credit risk, recall is especially important — missing an actual default is more costly than a false alarm — and XGBoost achieves 79% recall while keeping precision high at 82%.
+
+## Key Visualizations
+
+### ROC Curve Comparison
+![ROC Curves](plots/roc_curves.png)
+
+### Confusion Matrices
+![Confusion Matrices](plots/confusion_matrices.png)
+
+### Feature Importance (Random Forest)
+![Feature Importance](plots/feature_importance.png)
+
+### Loan Amount Distribution
+![Loan Amount Distribution](plots/loan_amount_distribution.png)
+
+## Key Findings
+
+- **Loan grade and interest rate** are the strongest predictors of default — borrowers with lower grades and higher rates default at significantly higher rates
+- **Renters default more than homeowners** — RENT borrowers account for the majority of defaults in the dataset
+- **Loan percent income** (how large the loan is relative to income) is a critical risk signal
+- **Prior defaults** (`cb_person_default_on_file`) are a strong predictor of future defaults

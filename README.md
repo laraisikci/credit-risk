@@ -60,16 +60,13 @@ The dataset is imbalanced (~78% non-default, ~22% default). To prevent the model
 ## Key Visualizations
 
 ### ROC Curve Comparison
-![ROC Curves](plots/roc_curves.png)
 
 ### Confusion Matrices
-![Confusion Matrices](plots/confusion_matrices.png)
 
 ### Feature Importance (Random Forest)
-![Feature Importance](plots/feature_importance.png)
 
 ### Loan Amount Distribution
-![Loan Amount Distribution](plots/loan_amount_distribution.png)
+
 
 ## Key Findings
 
